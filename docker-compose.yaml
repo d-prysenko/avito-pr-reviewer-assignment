@@ -1,0 +1,59 @@
+services:
+  go-revass:
+    container_name: revass-app
+    build:
+      context: .
+      dockerfile: docker/go/Dockerfile
+    depends_on:
+      - goose
+    env_file:
+      - ./.env
+    volumes:
+      - ./logs:/logs
+    networks:
+      - revassnet
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+
+  goose:
+    container_name: revass-goose
+    build:
+      context: .
+      dockerfile: docker/goose/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GOOSE_DBSTRING: ${GOOSE_DBSTRING}
+    networks:
+      - revassnet
+
+  postgres:
+    container_name: revass-postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    hostname: db
+    networks:
+      - revassnet
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+      - ./docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    name: "revass-pg-data"
+
+networks:
+  revassnet:
+    driver: bridge
