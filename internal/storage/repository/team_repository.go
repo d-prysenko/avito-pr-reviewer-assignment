@@ -13,6 +13,7 @@ type TeamRepository interface {
 	GetTeamIDByName(teamName string) (int64, error)
 	AddUserIntoTeam(teamID int64, userID int64) error
 	AddTeamAndUsers(team model.Team) error
+	GetTeamMembersByID(teamID int64) ([]*model.TeamMember, error)
 }
 
 type teamRepository struct {
@@ -122,4 +123,54 @@ func (rep *teamRepository) AddTeamAndUsers(team model.Team) error {
 	}
 
 	return nil
+}
+
+func (rep *teamRepository) GetTeamMembersByID(teamID int64) ([]*model.TeamMember, error) {
+	const method = "GetUserWishesBookedBy"
+
+	var members []*model.TeamMember
+
+	rows, err := rep.db.Query(`
+		SELECT 
+		users.str_id, users.username, users.is_active
+		FROM team
+		LEFT JOIN team_user ON team.id = team_user.team_id
+		LEFT JOIN users ON team_user.user_id = users.id
+		WHERE team.id = $1;
+	`, teamID)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	for rows.Next() {
+		member, err := scanTeamMember(rows)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", method, err)
+		}
+
+		members = append(members, member)
+	}
+
+	return members, nil
+}
+
+func scanTeamMember(rows *sql.Rows) (*model.TeamMember, error) {
+	teamMember := new(model.TeamMember)
+
+	err := rows.Scan(
+		&teamMember.UserID,
+		&teamMember.Username,
+		&teamMember.IsActive,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storage.ErrEntityNotFound
+		}
+
+		return nil, err
+	}
+
+	return teamMember, nil
 }

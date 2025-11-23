@@ -28,7 +28,7 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 	})
 
 	router.HandleFunc("/team/add", team.Add(log, teamManager)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/team/get", team.Get()).Methods("GET", "OPTIONS")
+	router.HandleFunc("/team/get", team.Get(log, teamManager)).Methods("GET", "OPTIONS")
 
 	router.HandleFunc("/users/setIsActive", users.SetIsActive()).Methods("POST", "OPTIONS")
 	router.HandleFunc("/users/getReview", users.GetReview()).Methods("GET", "OPTIONS")

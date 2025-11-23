@@ -2,7 +2,7 @@ package model
 
 type Team struct {
 	Name    string       `json:"team_name"`
-	Members []TeamMember `json:"members"`
+	Members []*TeamMember `json:"members"`
 }
 
 type TeamMember struct {

@@ -3,7 +3,6 @@ package team
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"revass/internal/handler"
@@ -60,8 +59,29 @@ func Add(log *slog.Logger, teamManager service.TeamManager) http.HandlerFunc {
 	}
 }
 
-func Get() http.HandlerFunc {
+func Get(log *slog.Logger, teamManager service.TeamManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "You've requested: %s\n", r.URL.Path)
+		teamName := r.URL.Query().Get("team_name")
+		if teamName == "" {
+			handler.MakeBadRequestErrorResponse(w)
+
+			return
+		}
+
+		team, err := teamManager.GetTeam(teamName)
+		if err != nil {
+			if errors.Is(err, storage.ErrEntityNotFound) {
+				handler.MakeNotFoundErrorResponse(w);
+
+				return
+			}
+
+			log.Error("Team get", "err", err.Error())
+			handler.MakeInternalServerErrorResponse(w)
+
+			return
+		}
+
+		handler.MakeJsonResponse(w, team, http.StatusOK)
 	}
 }

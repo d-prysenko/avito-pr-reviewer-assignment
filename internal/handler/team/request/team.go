@@ -17,10 +17,10 @@ func (t *TeamAddRequest) ToTeamModel() model.Team {
 	var team model.Team
 
 	team.Name = t.Name
-	team.Members = make([]model.TeamMember, len(t.Members))
+	team.Members = make([]*model.TeamMember, len(t.Members))
 
 	for i := range t.Members {
-		team.Members[i] = model.TeamMember{
+		team.Members[i] = &model.TeamMember{
 			UserID:   t.Members[i].UserID,
 			Username: t.Members[i].Username,
 			IsActive: t.Members[i].IsActive,

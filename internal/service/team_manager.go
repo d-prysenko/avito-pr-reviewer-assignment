@@ -8,6 +8,7 @@ import (
 
 type TeamManager interface {
 	AddTeamWithMembers(team model.Team) error
+	GetTeam(teamName string) (*model.Team, error)
 }
 
 type teamManager struct {
@@ -28,4 +29,20 @@ func (tm *teamManager) AddTeamWithMembers(team model.Team) error {
 	}
 
 	return nil
+}
+
+func (tm *teamManager) GetTeam(teamName string) (*model.Team, error) {
+	method := "GetTeam"
+
+	teamID, err := tm.teamRep.GetTeamIDByName(teamName)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	members, err := tm.teamRep.GetTeamMembersByID(teamID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	return &model.Team{Name: teamName, Members: members}, nil
 }
