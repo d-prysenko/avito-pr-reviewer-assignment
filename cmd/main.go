@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"revass/internal/config"
 	"revass/internal/router"
-	"revass/internal/services/logger"
+	"revass/internal/service/logger"
 	"revass/internal/storage/postgersql"
 )
 
@@ -29,7 +29,7 @@ func main() {
 		database.Close()
 	}()
 
-	r := router.New()
+	r := router.New(database, log)
 	addr := fmt.Sprintf(":%d", cfg.Port)
 
 	fmt.Printf("Starting server on %s\n", addr)

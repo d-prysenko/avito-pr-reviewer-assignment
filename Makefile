@@ -12,3 +12,10 @@ lint: vet
 
 env:
 	cp .env.dist .env
+
+up:
+	docker compose up -d --build
+
+.PHONY:test
+test:
+	docker compose --env-file tests/.env.testing -f docker-compose.testing.yaml up --build --abort-on-container-exit
