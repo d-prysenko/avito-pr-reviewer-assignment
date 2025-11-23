@@ -14,10 +14,6 @@ import (
 	"github.com/gavv/httpexpect/v2"
 )
 
-const (
-	host = "app-test:8080"
-)
-
 func TestTeamAddTeamAlreadyExists(t *testing.T) {
 	setup(t)
 

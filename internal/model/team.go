@@ -1,7 +1,7 @@
 package model
 
 type Team struct {
-	Name    string       `json:"team_name"`
+	Name    string        `json:"team_name"`
 	Members []*TeamMember `json:"members"`
 }
 

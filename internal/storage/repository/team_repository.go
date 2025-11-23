@@ -93,7 +93,7 @@ func (rep *teamRepository) AddTeamAndUsers(team model.Team) error {
 			}
 
 			tx.Rollback()
-			
+
 			return fmt.Errorf("%s: %w", method, err)
 		}
 	}

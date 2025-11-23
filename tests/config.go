@@ -7,6 +7,10 @@ import (
 )
 
 const (
+	host = "app-test:8080"
+)
+
+const (
 	EnvLocal = "local"
 	EnvProd  = "prod"
 )

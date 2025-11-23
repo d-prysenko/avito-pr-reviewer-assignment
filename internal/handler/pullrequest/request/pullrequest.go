@@ -12,5 +12,5 @@ type PullRequestMergeRequest struct {
 
 type PullRequestReassignRequest struct {
 	PullRequestID string `json:"pull_request_id" validate:"required,max=32"`
-	OldReviewerID  string `json:"old_reviewer_id" validate:"required,max=32"`
+	OldReviewerID string `json:"old_reviewer_id" validate:"required,max=32"`
 }

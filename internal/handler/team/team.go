@@ -71,7 +71,7 @@ func Get(log *slog.Logger, teamManager service.TeamManager) http.HandlerFunc {
 		team, err := teamManager.GetTeam(teamName)
 		if err != nil {
 			if errors.Is(err, storage.ErrEntityNotFound) {
-				handler.MakeNotFoundErrorResponse(w);
+				handler.MakeNotFoundErrorResponse(w)
 
 				return
 			}

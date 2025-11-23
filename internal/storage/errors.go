@@ -9,7 +9,7 @@ var (
 	ErrEntityNotFound = errors.New("entity not found")
 	ErrUserExists     = errors.New("user already exists")
 	ErrTeamExists     = errors.New("team already exists")
-	ErrPRExists     = errors.New("pull request already exists")
+	ErrPRExists       = errors.New("pull request already exists")
 )
 
 type ErrEntityExists struct {

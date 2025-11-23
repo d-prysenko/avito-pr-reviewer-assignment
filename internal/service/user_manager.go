@@ -8,6 +8,7 @@ import (
 
 type UserManager interface {
 	SetIsActive(userID string, isActive bool) (*model.User, error)
+	GetReview(userID string) ([]*model.UserPullRequest, error)
 }
 
 type userManager struct {
@@ -37,4 +38,20 @@ func (um *userManager) SetIsActive(userID string, isActive bool) (*model.User, e
 	}
 
 	return user, nil
+}
+
+func (um *userManager) GetReview(userID string) ([]*model.UserPullRequest, error) {
+	const method = "GetReview"
+
+	_, err := um.userRep.GetUserByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	prs, err := um.userRep.GetReview(userID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	return prs, nil
 }

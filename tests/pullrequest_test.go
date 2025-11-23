@@ -198,7 +198,7 @@ func TestPullRequestMerge(t *testing.T) {
 
 		resp = e.POST("/pullRequest/merge").
 			WithJSON(request.PullRequestMergeRequest{
-				PullRequestID:   "pr-1001",
+				PullRequestID: "pr-1001",
 			},
 			).
 			Expect().Status(http.StatusOK).
@@ -210,7 +210,7 @@ func TestPullRequestMerge(t *testing.T) {
 
 		resp = e.POST("/pullRequest/merge").
 			WithJSON(request.PullRequestMergeRequest{
-				PullRequestID:   "pr-1001",
+				PullRequestID: "pr-1001",
 			},
 			).
 			Expect().Status(http.StatusOK).
@@ -222,10 +222,9 @@ func TestPullRequestMerge(t *testing.T) {
 	})
 }
 
-
 func TestPullRequestMergeNotFound(t *testing.T) {
 	setup(t)
-	
+
 	t.Run("/pullRequest/merge Merge pull request", func(t *testing.T) {
 		u := url.URL{
 			Scheme: "http",
@@ -236,15 +235,15 @@ func TestPullRequestMergeNotFound(t *testing.T) {
 
 		resp := e.POST("/pullRequest/merge").
 			WithJSON(request.PullRequestMergeRequest{
-				PullRequestID:   "pr-1001",
+				PullRequestID: "pr-1001",
 			},
 			).
 			Expect().Status(http.StatusNotFound).
 			JSON().Object()
 
-			resp.ContainsKey("error")
-			resp.Value("error").Object().Value("code").String().IsEqual("NOT_FOUND")
-			resp.Value("error").Object().Value("message").String().IsEqual("Resource not found")
+		resp.ContainsKey("error")
+		resp.Value("error").Object().Value("code").String().IsEqual("NOT_FOUND")
+		resp.Value("error").Object().Value("message").String().IsEqual("Resource not found")
 	})
 }
 
@@ -302,16 +301,16 @@ func TestPullRequestReassign(t *testing.T) {
 
 		resp := e.POST("/pullRequest/reassign").
 			WithJSON(request.PullRequestReassignRequest{
-				PullRequestID:   "pr-1001",
-				OldReviewerID:   "u2",
+				PullRequestID: "pr-1001",
+				OldReviewerID: "u2",
 			},
 			).
 			Expect().Status(http.StatusOK).
 			JSON().Object()
 
-			resp.ContainsKey("pr")
-			resp.Value("pr").Object().Value("assigned_reviewers").Array().Length().IsEqual(2)
-			resp.Value("replaced_by").String().IsEqual("u4")
+		resp.ContainsKey("pr")
+		resp.Value("pr").Object().Value("assigned_reviewers").Array().Length().IsEqual(2)
+		resp.Value("replaced_by").String().IsEqual("u4")
 	})
 }
 
@@ -373,15 +372,15 @@ func TestPullRequestReassignMerged(t *testing.T) {
 
 		resp := e.POST("/pullRequest/reassign").
 			WithJSON(request.PullRequestReassignRequest{
-				PullRequestID:   "pr-1001",
-				OldReviewerID:   "u2",
+				PullRequestID: "pr-1001",
+				OldReviewerID: "u2",
 			},
 			).
 			Expect().Status(http.StatusConflict).
 			JSON().Object()
 
-			resp.ContainsKey("error")
-			resp.Value("error").Object().Value("code").String().IsEqual("PR_MERGED")
-			resp.Value("error").Object().Value("message").String().IsEqual("cannot reassign on merged PR")
+		resp.ContainsKey("error")
+		resp.Value("error").Object().Value("code").String().IsEqual("PR_MERGED")
+		resp.Value("error").Object().Value("message").String().IsEqual("cannot reassign on merged PR")
 	})
 }
