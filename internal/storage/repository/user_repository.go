@@ -10,9 +10,9 @@ import (
 )
 
 type UserRepository interface {
-	CreateUser(userStrID string, username string, isActive bool) (int64, error)
-	GetUserByID(userID int) (*model.User, error)
-	SetIsActive(userID int, isActive bool) error
+	CreateUser(userID string, username string, isActive bool) error
+	GetUserByID(userID string) (*model.User, error)
+	SetIsActive(userID string, isActive bool) error
 }
 
 type userRepository struct {
@@ -23,24 +23,22 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (rep *userRepository) CreateUser(userStrID string, username string, isActive bool) (int64, error) {
+func (rep *userRepository) CreateUser(userID string, username string, isActive bool) error {
 	const method = "CreateUser"
 
-	var userID int64
-
-	err := rep.db.QueryRow("INSERT INTO users (user_str_id, username, is_active) VALUES ($1, $2, $3) RETURNING id", userStrID, username, isActive).Scan(&userID)
+	_, err := rep.db.Exec("INSERT INTO users (id, username, is_active) VALUES ($1, $2, $3)", userID, username, isActive)
 
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", method, err)
+		return fmt.Errorf("%s: %w", method, err)
 	}
 
-	return userID, nil
+	return nil
 }
 
-func (rep *userRepository) GetUserByID(userID int) (*model.User, error) {
+func (rep *userRepository) GetUserByID(userID string) (*model.User, error) {
 	const method = "GetUserByID"
 
-	row := rep.db.QueryRow("SELECT * FROM users WHERE user_id = $1", userID)
+	row := rep.db.QueryRow("SELECT * FROM users WHERE id = $1", userID)
 
 	user, err := scanUser(row)
 
@@ -55,7 +53,7 @@ func (rep *userRepository) GetUserByID(userID int) (*model.User, error) {
 	return user, nil
 }
 
-func (rep *userRepository) SetIsActive(userID int, isActive bool) error {
+func (rep *userRepository) SetIsActive(userID string, isActive bool) error {
 	const method = "SetIsActive"
 
 	_, err := rep.db.Exec("UPDATE users SET is_active = $1 WHERE id = $2", isActive, userID)
@@ -71,9 +69,9 @@ func scanUser(row *sql.Row) (*model.User, error) {
 
 	err := row.Scan(
 		&user.ID,
-		&user.StrID,
 		&user.Username,
 		&user.IsActive,
+		&user.Team,
 	)
 
 	if err != nil {

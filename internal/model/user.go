@@ -1,8 +1,8 @@
 package model
 
 type User struct {
-	ID       int64
-	StrID    string
+	ID       string
 	Username string
+	Team     int64
 	IsActive bool
 }

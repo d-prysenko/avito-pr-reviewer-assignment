@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"revass/internal/model"
 	"revass/internal/storage"
+
+	"github.com/lib/pq"
 )
 
 type TeamRepository interface {
 	CreateTeam(teamName string) (int64, error)
 	GetTeamIDByName(teamName string) (int64, error)
-	AddUserIntoTeam(teamID int64, userID int64) error
 	AddTeamAndUsers(team model.Team) error
 	GetTeamMembersByID(teamID int64) ([]*model.TeamMember, error)
+	GetActiveTeamMembersExcludingUser(teamID int64, userID string) ([]*model.TeamMember, error)
 }
 
 type teamRepository struct {
@@ -56,18 +58,6 @@ func (rep *teamRepository) GetTeamIDByName(teamName string) (int64, error) {
 	return teamID, nil
 }
 
-func (rep *teamRepository) AddUserIntoTeam(teamID int64, userID int64) error {
-	const method = "AddUserIntoTeam"
-
-	_, err := rep.db.Exec("INSERT INTO team_user (team_id, user_id) VALUES ($1, $2)", teamID, userID)
-
-	if err != nil {
-		return fmt.Errorf("%s: %w", method, err)
-	}
-
-	return nil
-}
-
 func (rep *teamRepository) AddTeamAndUsers(team model.Team) error {
 	const method = "AddTeamAndUsers"
 
@@ -93,25 +83,17 @@ func (rep *teamRepository) AddTeamAndUsers(team model.Team) error {
 	}
 
 	for _, member := range team.Members {
-		var userID int64
-		err := tx.QueryRow("SELECT id FROM users WHERE str_id = $1", member.UserID).Scan(&userID)
-		if err == nil {
-			tx.Rollback()
-
-			return fmt.Errorf("%s: %w", method, &storage.ErrEntityExists{ID: member.UserID, Err: storage.ErrUserExists})
-		}
-
-		err = tx.QueryRow("INSERT INTO users (str_id, username, is_active) VALUES ($1, $2, $3) RETURNING id", member.UserID, member.Username, member.IsActive).Scan(&userID)
+		_, err = tx.Exec("INSERT INTO users (id, username, is_active, team_id) VALUES ($1, $2, $3, $4)", member.UserID, member.Username, member.IsActive, teamID)
 		if err != nil {
+			var pqErr *pq.Error
+			if errors.As(err, &pqErr) && pqErr.Code.Name() == "unique_violation" {
+				tx.Rollback()
+
+				return fmt.Errorf("%s: %w", method, &storage.ErrEntityExists{ID: member.UserID, Err: storage.ErrUserExists})
+			}
+
 			tx.Rollback()
-
-			return fmt.Errorf("%s: %w", method, err)
-		}
-
-		_, err = tx.Exec("INSERT INTO team_user (team_id, user_id) VALUES ($1, $2)", teamID, userID)
-		if err != nil {
-			tx.Rollback()
-
+			
 			return fmt.Errorf("%s: %w", method, err)
 		}
 	}
@@ -126,18 +108,44 @@ func (rep *teamRepository) AddTeamAndUsers(team model.Team) error {
 }
 
 func (rep *teamRepository) GetTeamMembersByID(teamID int64) ([]*model.TeamMember, error) {
-	const method = "GetUserWishesBookedBy"
+	const method = "GetTeamMembersByID"
 
 	var members []*model.TeamMember
 
 	rows, err := rep.db.Query(`
 		SELECT 
-		users.str_id, users.username, users.is_active
-		FROM team
-		LEFT JOIN team_user ON team.id = team_user.team_id
-		LEFT JOIN users ON team_user.user_id = users.id
-		WHERE team.id = $1;
+		users.id, users.username, users.is_active
+		FROM users
+		WHERE users.team_id = $1;
 	`, teamID)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	for rows.Next() {
+		member, err := scanTeamMember(rows)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", method, err)
+		}
+
+		members = append(members, member)
+	}
+
+	return members, nil
+}
+
+func (rep *teamRepository) GetActiveTeamMembersExcludingUser(teamID int64, userID string) ([]*model.TeamMember, error) {
+	const method = "GetActiveTeamMembersExcludingUser"
+
+	var members []*model.TeamMember
+
+	rows, err := rep.db.Query(`
+		SELECT 
+		users.id, users.username, users.is_active
+		FROM users
+		WHERE users.team_id = $1 AND users.id != $2 AND users.is_active = TRUE;
+	`, teamID, userID)
 
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", method, err)

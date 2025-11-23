@@ -20,8 +20,10 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 
 	userRep := repository.NewUserRepository(db)
 	teamRep := repository.NewTeamRepository(db)
+	prRep := repository.NewPRRepository(db)
 
 	teamManager := service.NewTeamManager(userRep, teamRep)
+	prManager := service.NewPRManager(prRep, userRep, teamRep)
 
 	router.HandleFunc("/", func(w http.ResponseWriter, request *http.Request) {
 		fmt.Fprintf(w, "Hello, you've requested: %s\n", request.URL.Path)
@@ -33,7 +35,7 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 	router.HandleFunc("/users/setIsActive", users.SetIsActive()).Methods("POST", "OPTIONS")
 	router.HandleFunc("/users/getReview", users.GetReview()).Methods("GET", "OPTIONS")
 
-	router.HandleFunc("/pullRequest/create", pullrequest.Create()).Methods("POST", "OPTIONS")
+	router.HandleFunc("/pullRequest/create", pullrequest.Create(log, prManager)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/pullRequest/merge", pullrequest.Merge()).Methods("POST", "OPTIONS")
 	router.HandleFunc("/pullRequest/reassign", pullrequest.Reassign()).Methods("POST", "OPTIONS")
 

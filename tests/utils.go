@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/pressly/goose/v3"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setup(t *testing.T) *sql.DB {
@@ -42,16 +42,16 @@ func gooseMigrate(t *testing.T, db *sql.DB) {
 	goose.SetBaseFS(fsys)
 
 	if err := goose.SetDialect("postgres"); err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 
 	if err := goose.Up(db, "migrations"); err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 
 	t.Cleanup(func() {
 		err := goose.Reset(db, "migrations")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		db.Close()
 	})
 }
