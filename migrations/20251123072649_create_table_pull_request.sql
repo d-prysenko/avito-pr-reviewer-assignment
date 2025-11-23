@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS revass.pull_request
     id varchar(32) PRIMARY KEY,
     name varchar(128) NOT NULL,
     author_id varchar(32) NOT NULL REFERENCES revass.users(id) ON DELETE CASCADE,
-    status PR_STATUS DEFAULT 'OPEN'
+    status PR_STATUS DEFAULT 'OPEN',
+    merged_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS revass.pr_reviewer

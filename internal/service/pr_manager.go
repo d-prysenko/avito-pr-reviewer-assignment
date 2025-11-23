@@ -11,6 +11,7 @@ import (
 
 type PRManager interface {
 	Create(id string, name string, authorID string) (*model.PullRequest, error)
+	Merge(id string) (*model.PullRequest, error)
 }
 
 type prManager struct {
@@ -89,7 +90,7 @@ func getDifferentRandomInts(max int) (i1 int, i2 int) {
 
 	if max >= 2 {
 		i1 = r.Intn(max)
-		i2 = r.Intn(max-1)
+		i2 = r.Intn(max - 1)
 
 		if i2 >= i1 {
 			i2++
@@ -97,4 +98,29 @@ func getDifferentRandomInts(max int) (i1 int, i2 int) {
 	}
 
 	return i1, i2
+}
+
+func (prm *prManager) Merge(id string) (*model.PullRequest, error) {
+	const method = "Merge"
+
+	pr, err := prm.prRep.GetByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	if pr.Status == repository.PRStatusMerged {
+		return pr, nil
+	}
+
+	err = prm.prRep.Merge(id)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	pr, err = prm.prRep.GetByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", method, err)
+	}
+
+	return pr, nil
 }

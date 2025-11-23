@@ -36,7 +36,7 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 	router.HandleFunc("/users/getReview", users.GetReview()).Methods("GET", "OPTIONS")
 
 	router.HandleFunc("/pullRequest/create", pullrequest.Create(log, prManager)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/pullRequest/merge", pullrequest.Merge()).Methods("POST", "OPTIONS")
+	router.HandleFunc("/pullRequest/merge", pullrequest.Merge(log, prManager)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/pullRequest/reassign", pullrequest.Reassign()).Methods("POST", "OPTIONS")
 
 	return router

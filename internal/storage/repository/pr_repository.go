@@ -8,11 +8,17 @@ import (
 	"revass/internal/storage"
 )
 
+const (
+	PRStatusOpen   = "OPEN"
+	PRStatusMerged = "MERGED"
+)
+
 type PRRepository interface {
 	CreatePR(id string, name string, authorID string) error
 	AssignReviewer(prID string, reviewerID string) error
 	GetByID(id string) (*model.PullRequest, error)
 	HasPR(id string) error
+	Merge(id string) error
 }
 
 type prRepository struct {
@@ -54,14 +60,18 @@ func (rep *prRepository) GetByID(id string) (*model.PullRequest, error) {
 
 	err := rep.db.QueryRow(`
 		SELECT 
-		pull_request.id, pull_request.name, pull_request.author_id, pull_request.status
+		pull_request.id, pull_request.name, pull_request.author_id, pull_request.status, pull_request.merged_at
 		FROM pull_request
 		WHERE pull_request.id = $1;
-	`, id).Scan(&pr.PullRequestID, &pr.PullRequestName, &pr.AuthorID, &pr.Status)
+	`, id).Scan(&pr.PullRequestID, &pr.PullRequestName, &pr.AuthorID, &pr.Status, &pr.MergedAt)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%s: %w", method, storage.ErrEntityNotFound)
+		}
+
 		return nil, fmt.Errorf("%s: %w", method, err)
 	}
-	
+
 	rows, err := rep.db.Query(`
 		SELECT 
 		pr_reviewer.reviewer_id
@@ -88,15 +98,26 @@ func (rep *prRepository) GetByID(id string) (*model.PullRequest, error) {
 
 func (rep *prRepository) HasPR(id string) error {
 	const method = "GetByID"
-	
+
 	var name string
 	err := rep.db.QueryRow("SELECT name FROM pull_request WHERE id = $1", id).Scan(&name)
-	
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%s: %w", method, storage.ErrEntityNotFound)
 		}
 
+		return fmt.Errorf("%s: %w", method, err)
+	}
+
+	return nil
+}
+
+func (rep *prRepository) Merge(id string) error {
+	const method = "Merge"
+
+	_, err := rep.db.Exec("UPDATE pull_request SET status = 'MERGED', merged_at = CURRENT_TIMESTAMP WHERE id = $1", id)
+	if err != nil {
 		return fmt.Errorf("%s: %w", method, err)
 	}
 

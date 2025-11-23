@@ -143,6 +143,104 @@ func TestPullRequestCreateWithNotExistingUser(t *testing.T) {
 			Expect().Status(http.StatusNotFound).
 			JSON().Object()
 
+		resp.ContainsKey("error")
+		resp.Value("error").Object().Value("code").String().IsEqual("NOT_FOUND")
+		resp.Value("error").Object().Value("message").String().IsEqual("Resource not found")
+	})
+}
+
+func TestPullRequestMerge(t *testing.T) {
+	db := setup(t)
+
+	userRep := repository.NewUserRepository(db)
+	teamRep := repository.NewTeamRepository(db)
+
+	teamManager := service.NewTeamManager(userRep, teamRep)
+
+	t.Run("/pullRequest/merge Merge pull request", func(t *testing.T) {
+		teamManager.AddTeamWithMembers(model.Team{
+			Name: "team 1",
+			Members: []*model.TeamMember{
+				{
+					UserID:   "u1",
+					Username: "Alice",
+					IsActive: true,
+				},
+				{
+					UserID:   "u2",
+					Username: "Bob",
+					IsActive: true,
+				},
+			},
+		})
+
+		u := url.URL{
+			Scheme: "http",
+			Host:   host,
+		}
+
+		e := httpexpect.Default(t, u.String())
+
+		resp := e.POST("/pullRequest/create").
+			WithJSON(request.PullRequestCreateRequest{
+				PullRequestID:   "pr-1001",
+				PullRequestName: "Add search",
+				AuthorID:        "u1",
+			},
+			).
+			Expect().Status(http.StatusCreated).
+			JSON().Object()
+
+		resp.ContainsKey("pr")
+		resp.Value("pr").Object().Value("assigned_reviewers").Array().Length().IsEqual(1)
+		resp.Value("pr").Object().NotContainsKey("merged_at")
+
+		resp = e.POST("/pullRequest/merge").
+			WithJSON(request.PullRequestMergeRequest{
+				PullRequestID:   "pr-1001",
+			},
+			).
+			Expect().Status(http.StatusOK).
+			JSON().Object()
+
+		resp.ContainsKey("pr")
+		resp.Value("pr").Object().Value("assigned_reviewers").Array().Length().IsEqual(1)
+		resp.Value("pr").Object().ContainsKey("merged_at")
+
+		resp = e.POST("/pullRequest/merge").
+			WithJSON(request.PullRequestMergeRequest{
+				PullRequestID:   "pr-1001",
+			},
+			).
+			Expect().Status(http.StatusOK).
+			JSON().Object()
+
+		resp.ContainsKey("pr")
+		resp.Value("pr").Object().Value("assigned_reviewers").Array().Length().IsEqual(1)
+		resp.Value("pr").Object().ContainsKey("merged_at")
+	})
+}
+
+
+func TestPullRequestMergeNotFound(t *testing.T) {
+	setup(t)
+	
+	t.Run("/pullRequest/merge Merge pull request", func(t *testing.T) {
+		u := url.URL{
+			Scheme: "http",
+			Host:   host,
+		}
+
+		e := httpexpect.Default(t, u.String())
+
+		resp := e.POST("/pullRequest/merge").
+			WithJSON(request.PullRequestMergeRequest{
+				PullRequestID:   "pr-1001",
+			},
+			).
+			Expect().Status(http.StatusNotFound).
+			JSON().Object()
+
 			resp.ContainsKey("error")
 			resp.Value("error").Object().Value("code").String().IsEqual("NOT_FOUND")
 			resp.Value("error").Object().Value("message").String().IsEqual("Resource not found")

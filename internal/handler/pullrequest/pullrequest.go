@@ -60,9 +60,40 @@ func Create(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 	}
 }
 
-func Merge() http.HandlerFunc {
+func Merge(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "You've requested: %s\n", r.URL.Path)
+		var prDTO request.PullRequestMergeRequest
+		err := json.NewDecoder(r.Body).Decode(&prDTO)
+		if err != nil {
+			log.Error("Json decode", "err", err.Error())
+			handler.MakeInternalServerErrorResponse(w)
+
+			return
+		}
+
+		validate := validator.New()
+		err = validate.Struct(prDTO)
+		if err != nil {
+			handler.MakeBadRequestErrorResponse(w)
+
+			return
+		}
+
+		pr, err := prManager.Merge(prDTO.PullRequestID)
+		if err != nil {
+			if errors.Is(err, storage.ErrEntityNotFound) {
+				handler.MakeNotFoundErrorResponse(w);
+
+				return
+			}
+
+			log.Error("PR Merge", "err", err.Error())
+			handler.MakeInternalServerErrorResponse(w)
+
+			return
+		}
+
+		handler.MakeJsonResponse(w, response.PRCreateResponse{PR: pr}, http.StatusOK)
 	}
 }
 
