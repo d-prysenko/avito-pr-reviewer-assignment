@@ -20,7 +20,7 @@ func Create(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&prDTO)
 		if err != nil {
 			log.Error("Json decode", "err", err.Error())
-			handler.MakeInternalServerErrorResponse(w)
+			handler.MakeBadRequestErrorResponse(w)
 
 			return
 		}
@@ -65,7 +65,7 @@ func Merge(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&prDTO)
 		if err != nil {
 			log.Error("Json decode", "err", err.Error())
-			handler.MakeInternalServerErrorResponse(w)
+			handler.MakeBadRequestErrorResponse(w)
 
 			return
 		}
@@ -102,7 +102,7 @@ func Reassign(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&prDTO)
 		if err != nil {
 			log.Error("Json decode", "err", err.Error())
-			handler.MakeInternalServerErrorResponse(w)
+			handler.MakeBadRequestErrorResponse(w)
 
 			return
 		}

@@ -20,7 +20,7 @@ func Add(log *slog.Logger, teamManager service.TeamManager) http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&teamDTO)
 		if err != nil {
 			log.Error("Json decode", "err", err.Error())
-			handler.MakeInternalServerErrorResponse(w)
+			handler.MakeBadRequestErrorResponse(w)
 
 			return
 		}

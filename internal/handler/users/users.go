@@ -20,7 +20,7 @@ func SetIsActive(log *slog.Logger, userManager service.UserManager) http.Handler
 		err := json.NewDecoder(r.Body).Decode(&userDTO)
 		if err != nil {
 			log.Error("Json decode", "err", err.Error())
-			handler.MakeInternalServerErrorResponse(w)
+			handler.MakeBadRequestErrorResponse(w)
 
 			return
 		}
