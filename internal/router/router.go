@@ -22,11 +22,12 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 
 	teamManager := service.NewTeamManager(userRep, teamRep)
 	prManager := service.NewPRManager(prRep, userRep, teamRep)
+	userManager := service.NewUserManager(userRep)
 
 	router.HandleFunc("/team/add", team.Add(log, teamManager)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/team/get", team.Get(log, teamManager)).Methods("GET", "OPTIONS")
 
-	router.HandleFunc("/users/setIsActive", users.SetIsActive()).Methods("POST", "OPTIONS")
+	router.HandleFunc("/users/setIsActive", users.SetIsActive(log, userManager)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/users/getReview", users.GetReview()).Methods("GET", "OPTIONS")
 
 	router.HandleFunc("/pullRequest/create", pullrequest.Create(log, prManager)).Methods("POST", "OPTIONS")
