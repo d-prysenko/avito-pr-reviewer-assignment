@@ -14,7 +14,6 @@ import (
 
 func New(db *sql.DB, log *slog.Logger) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	// router.Use(middleware.CorsMiddleware)
 
 	userRep := repository.NewUserRepository(db)
 	teamRep := repository.NewTeamRepository(db)
@@ -24,15 +23,15 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 	prManager := service.NewPRManager(prRep, userRep, teamRep)
 	userManager := service.NewUserManager(userRep)
 
-	router.HandleFunc("/team/add", team.Add(log, teamManager)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/team/get", team.Get(log, teamManager)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/team/add", team.Add(log, teamManager)).Methods("POST")
+	router.HandleFunc("/team/get", team.Get(log, teamManager)).Methods("GET")
 
-	router.HandleFunc("/users/setIsActive", users.SetIsActive(log, userManager)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/users/getReview", users.GetReview(log, userManager)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/users/setIsActive", users.SetIsActive(log, userManager)).Methods("POST")
+	router.HandleFunc("/users/getReview", users.GetReview(log, userManager)).Methods("GET")
 
-	router.HandleFunc("/pullRequest/create", pullrequest.Create(log, prManager)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/pullRequest/merge", pullrequest.Merge(log, prManager)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/pullRequest/reassign", pullrequest.Reassign(log, prManager)).Methods("POST", "OPTIONS")
+	router.HandleFunc("/pullRequest/create", pullrequest.Create(log, prManager)).Methods("POST")
+	router.HandleFunc("/pullRequest/merge", pullrequest.Merge(log, prManager)).Methods("POST")
+	router.HandleFunc("/pullRequest/reassign", pullrequest.Reassign(log, prManager)).Methods("POST")
 
 	return router
 }
