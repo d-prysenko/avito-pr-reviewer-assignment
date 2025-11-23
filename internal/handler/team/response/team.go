@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	ERR_CODE_TEAM_EXISTS = "TEAM_EXISTS"
-	ERR_CODE_USER_EXISTS = "USER_EXISTS"
+	ErrorCodeTeamExists = "TEAM_EXISTS"
+	ErrorCodeUserExists = "USER_EXISTS"
 )
 
 type TeamAddResponse struct {
@@ -19,7 +19,7 @@ func MakeUserAlreadyExistsReponse(w http.ResponseWriter, userID string) {
 	handler.MakeErrorResponse(
 		w,
 		handler.ErrorResponse{
-			Code:    ERR_CODE_USER_EXISTS,
+			Code:    ErrorCodeUserExists,
 			Message: "User '" + userID + "' already exists",
 		},
 		http.StatusBadRequest,
@@ -30,7 +30,7 @@ func MakeTeamAlreadyExistsReponse(w http.ResponseWriter, teamID string) {
 	handler.MakeErrorResponse(
 		w,
 		handler.ErrorResponse{
-			Code:    ERR_CODE_TEAM_EXISTS,
+			Code:    ErrorCodeTeamExists,
 			Message: "Team '" + teamID + "' already exists",
 		},
 		http.StatusBadRequest,

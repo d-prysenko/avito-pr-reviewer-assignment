@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	ERR_CODE_PR_EXISTS = "PR_EXISTS"
-	ERR_CODE_PR_MERGED = "PR_MERGED"
+	ErrorCodePRExists = "PR_EXISTS"
+	ErrorCodePRMerged = "PR_MERGED"
 )
 
 type PRCreateResponse struct {
@@ -24,7 +24,7 @@ func MakePRAlreadyExistsReponse(w http.ResponseWriter, prID string) {
 	handler.MakeErrorResponse(
 		w,
 		handler.ErrorResponse{
-			Code:    ERR_CODE_PR_EXISTS,
+			Code:    ErrorCodePRExists,
 			Message: "PR '" + prID + "' already exists",
 		},
 		http.StatusConflict,
@@ -35,7 +35,7 @@ func MakePRMergedReponse(w http.ResponseWriter) {
 	handler.MakeErrorResponse(
 		w,
 		handler.ErrorResponse{
-			Code:    ERR_CODE_PR_MERGED,
+			Code:    ErrorCodePRMerged,
 			Message: "cannot reassign on merged PR",
 		},
 		http.StatusConflict,

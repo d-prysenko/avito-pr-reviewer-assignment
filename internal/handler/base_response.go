@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	ERR_CODE_BAD_REQUEST           = "BAD_REQUEST"
-	ERR_CODE_INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
-	ERR_CODE_NOT_FOUND             = "NOT_FOUND"
+	ErrorCodeBadRequest          = "BAD_REQUEST"
+	ErrorCodeInternalServerError = "INTERNAL_SERVER_ERROR"
+	ErrorCodeNotFound            = "NOT_FOUND"
 )
 
 type ErrorResponse struct {
@@ -38,13 +38,13 @@ func MakeErrorResponse(w http.ResponseWriter, e ErrorResponse, statusCode int) {
 }
 
 func MakeInternalServerErrorResponse(w http.ResponseWriter) {
-	MakeErrorResponse(w, ErrorResponse{Code: ERR_CODE_INTERNAL_SERVER_ERROR, Message: "Internal server error"}, http.StatusInternalServerError)
+	MakeErrorResponse(w, ErrorResponse{Code: ErrorCodeInternalServerError, Message: "Internal server error"}, http.StatusInternalServerError)
 }
 
 func MakeBadRequestErrorResponse(w http.ResponseWriter) {
-	MakeErrorResponse(w, ErrorResponse{Code: ERR_CODE_BAD_REQUEST, Message: "Bad request"}, http.StatusBadRequest)
+	MakeErrorResponse(w, ErrorResponse{Code: ErrorCodeBadRequest, Message: "Bad request"}, http.StatusBadRequest)
 }
 
 func MakeNotFoundErrorResponse(w http.ResponseWriter) {
-	MakeErrorResponse(w, ErrorResponse{Code: ERR_CODE_NOT_FOUND, Message: "Resource not found"}, http.StatusNotFound)
+	MakeErrorResponse(w, ErrorResponse{Code: ErrorCodeNotFound, Message: "Resource not found"}, http.StatusNotFound)
 }
