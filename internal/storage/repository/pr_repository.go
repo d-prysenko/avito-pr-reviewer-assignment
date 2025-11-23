@@ -16,6 +16,7 @@ const (
 type PRRepository interface {
 	CreatePR(id string, name string, authorID string) error
 	AssignReviewer(prID string, reviewerID string) error
+	RemoveReviewer(prID string, reviewerID string) error
 	GetByID(id string) (*model.PullRequest, error)
 	HasPR(id string) error
 	Merge(id string) error
@@ -45,6 +46,18 @@ func (rep *prRepository) AssignReviewer(prID string, reviewerID string) error {
 	const method = "AssignReviewer"
 
 	_, err := rep.db.Exec("INSERT INTO pr_reviewer (pr_id, reviewer_id) VALUES ($1, $2)", prID, reviewerID)
+
+	if err != nil {
+		return fmt.Errorf("%s: %w", method, err)
+	}
+
+	return nil
+}
+
+func (rep *prRepository) RemoveReviewer(prID string, reviewerID string) error {
+	const method = "RemoveReviewer"
+
+	_, err := rep.db.Exec("DELETE FROM pr_reviewer WHERE pr_id = $1 AND reviewer_id = $2", prID, reviewerID)
 
 	if err != nil {
 		return fmt.Errorf("%s: %w", method, err)

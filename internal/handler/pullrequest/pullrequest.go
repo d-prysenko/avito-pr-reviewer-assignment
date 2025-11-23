@@ -3,7 +3,6 @@ package pullrequest
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"revass/internal/handler"
@@ -45,7 +44,7 @@ func Create(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 				}
 			}
 			if errors.Is(err, storage.ErrEntityNotFound) {
-				handler.MakeNotFoundErrorResponse(w);
+				handler.MakeNotFoundErrorResponse(w)
 
 				return
 			}
@@ -82,7 +81,7 @@ func Merge(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 		pr, err := prManager.Merge(prDTO.PullRequestID)
 		if err != nil {
 			if errors.Is(err, storage.ErrEntityNotFound) {
-				handler.MakeNotFoundErrorResponse(w);
+				handler.MakeNotFoundErrorResponse(w)
 
 				return
 			}
@@ -97,8 +96,45 @@ func Merge(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 	}
 }
 
-func Reassign() http.HandlerFunc {
+func Reassign(log *slog.Logger, prManager service.PRManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "You've requested: %s\n", r.URL.Path)
+		var prDTO request.PullRequestReassignRequest
+		err := json.NewDecoder(r.Body).Decode(&prDTO)
+		if err != nil {
+			log.Error("Json decode", "err", err.Error())
+			handler.MakeInternalServerErrorResponse(w)
+
+			return
+		}
+
+		validate := validator.New()
+		err = validate.Struct(prDTO)
+		if err != nil {
+			handler.MakeBadRequestErrorResponse(w)
+
+			return
+		}
+
+		pr, newReviewer, err := prManager.Reassign(prDTO.PullRequestID, prDTO.OldReviewerID)
+		if err != nil {
+			if errors.Is(err, storage.ErrEntityNotFound) {
+				handler.MakeNotFoundErrorResponse(w)
+
+				return
+			}
+
+			if errors.Is(err, service.ErrPRMerged) {
+				response.MakePRMergedReponse(w)
+
+				return
+			}
+
+			log.Error("PR Merge", "err", err.Error())
+			handler.MakeInternalServerErrorResponse(w)
+
+			return
+		}
+
+		handler.MakeJsonResponse(w, response.PRReassignResponse{PR: pr, ReplacedBy: newReviewer}, http.StatusOK)
 	}
 }

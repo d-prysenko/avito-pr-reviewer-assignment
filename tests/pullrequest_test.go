@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/require"
 
 	"github.com/gavv/httpexpect/v2"
 )
@@ -244,5 +245,143 @@ func TestPullRequestMergeNotFound(t *testing.T) {
 			resp.ContainsKey("error")
 			resp.Value("error").Object().Value("code").String().IsEqual("NOT_FOUND")
 			resp.Value("error").Object().Value("message").String().IsEqual("Resource not found")
+	})
+}
+
+func TestPullRequestReassign(t *testing.T) {
+	db := setup(t)
+
+	userRep := repository.NewUserRepository(db)
+	teamRep := repository.NewTeamRepository(db)
+	prRep := repository.NewPRRepository(db)
+
+	teamManager := service.NewTeamManager(userRep, teamRep)
+
+	t.Run("/pullRequest/reassign Reassign pull request", func(t *testing.T) {
+		teamManager.AddTeamWithMembers(model.Team{
+			Name: "team 1",
+			Members: []*model.TeamMember{
+				{
+					UserID:   "u1",
+					Username: "Alice",
+					IsActive: true,
+				},
+				{
+					UserID:   "u2",
+					Username: "Bob",
+					IsActive: true,
+				},
+				{
+					UserID:   "u3",
+					Username: "Margo",
+					IsActive: true,
+				},
+				{
+					UserID:   "u4",
+					Username: "Alex",
+					IsActive: true,
+				},
+			},
+		})
+
+		err := prRep.CreatePR("pr-1001", "Add search", "u1")
+		require.NoError(t, err)
+
+		err = prRep.AssignReviewer("pr-1001", "u2")
+		require.NoError(t, err)
+
+		err = prRep.AssignReviewer("pr-1001", "u3")
+		require.NoError(t, err)
+
+		u := url.URL{
+			Scheme: "http",
+			Host:   host,
+		}
+
+		e := httpexpect.Default(t, u.String())
+
+		resp := e.POST("/pullRequest/reassign").
+			WithJSON(request.PullRequestReassignRequest{
+				PullRequestID:   "pr-1001",
+				OldReviewerID:   "u2",
+			},
+			).
+			Expect().Status(http.StatusOK).
+			JSON().Object()
+
+			resp.ContainsKey("pr")
+			resp.Value("pr").Object().Value("assigned_reviewers").Array().Length().IsEqual(2)
+			resp.Value("replaced_by").String().IsEqual("u4")
+	})
+}
+
+func TestPullRequestReassignMerged(t *testing.T) {
+	db := setup(t)
+
+	userRep := repository.NewUserRepository(db)
+	teamRep := repository.NewTeamRepository(db)
+	prRep := repository.NewPRRepository(db)
+
+	teamManager := service.NewTeamManager(userRep, teamRep)
+	prManager := service.NewPRManager(prRep, userRep, teamRep)
+
+	t.Run("/pullRequest/reassign Reassign merged pull request", func(t *testing.T) {
+		teamManager.AddTeamWithMembers(model.Team{
+			Name: "team 1",
+			Members: []*model.TeamMember{
+				{
+					UserID:   "u1",
+					Username: "Alice",
+					IsActive: true,
+				},
+				{
+					UserID:   "u2",
+					Username: "Bob",
+					IsActive: true,
+				},
+				{
+					UserID:   "u3",
+					Username: "Margo",
+					IsActive: true,
+				},
+				{
+					UserID:   "u4",
+					Username: "Alex",
+					IsActive: true,
+				},
+			},
+		})
+
+		err := prRep.CreatePR("pr-1001", "Add search", "u1")
+		require.NoError(t, err)
+
+		err = prRep.AssignReviewer("pr-1001", "u2")
+		require.NoError(t, err)
+
+		err = prRep.AssignReviewer("pr-1001", "u3")
+		require.NoError(t, err)
+
+		_, err = prManager.Merge("pr-1001")
+		require.NoError(t, err)
+
+		u := url.URL{
+			Scheme: "http",
+			Host:   host,
+		}
+
+		e := httpexpect.Default(t, u.String())
+
+		resp := e.POST("/pullRequest/reassign").
+			WithJSON(request.PullRequestReassignRequest{
+				PullRequestID:   "pr-1001",
+				OldReviewerID:   "u2",
+			},
+			).
+			Expect().Status(http.StatusConflict).
+			JSON().Object()
+
+			resp.ContainsKey("error")
+			resp.Value("error").Object().Value("code").String().IsEqual("PR_MERGED")
+			resp.Value("error").Object().Value("message").String().IsEqual("cannot reassign on merged PR")
 	})
 }

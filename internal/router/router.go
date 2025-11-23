@@ -2,9 +2,7 @@ package router
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
-	"net/http"
 	"revass/internal/handler/pullrequest"
 	"revass/internal/handler/team"
 	"revass/internal/handler/users"
@@ -25,10 +23,6 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 	teamManager := service.NewTeamManager(userRep, teamRep)
 	prManager := service.NewPRManager(prRep, userRep, teamRep)
 
-	router.HandleFunc("/", func(w http.ResponseWriter, request *http.Request) {
-		fmt.Fprintf(w, "Hello, you've requested: %s\n", request.URL.Path)
-	})
-
 	router.HandleFunc("/team/add", team.Add(log, teamManager)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/team/get", team.Get(log, teamManager)).Methods("GET", "OPTIONS")
 
@@ -37,7 +31,7 @@ func New(db *sql.DB, log *slog.Logger) *mux.Router {
 
 	router.HandleFunc("/pullRequest/create", pullrequest.Create(log, prManager)).Methods("POST", "OPTIONS")
 	router.HandleFunc("/pullRequest/merge", pullrequest.Merge(log, prManager)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/pullRequest/reassign", pullrequest.Reassign()).Methods("POST", "OPTIONS")
+	router.HandleFunc("/pullRequest/reassign", pullrequest.Reassign(log, prManager)).Methods("POST", "OPTIONS")
 
 	return router
 }
