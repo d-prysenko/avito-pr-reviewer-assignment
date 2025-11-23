@@ -26,3 +26,11 @@ make lint
 make test
 ```
 Для тестов используется /docker-compose.testing.yaml, /tests/.env.testing, через докер поднимается отдельная база данных и прогоняются e2e тесты на основные кейсы. _TODO: замокать всё, покрыть юнитами_
+
+### Парочка простеньких k6 нагрузочных тестов
+
+Получение команды
+![Получение команды](https://github.com/d-prysenko/avito-pr-reviewer-assignment/blob/main/docs/res/team-get.jpg?raw=true)
+
+Добавление команды
+![Добавление команды](https://github.com/d-prysenko/avito-pr-reviewer-assignment/blob/main/docs/res/team-add.jpg?raw=true)
